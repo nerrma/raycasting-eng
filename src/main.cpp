@@ -11,7 +11,7 @@ const int SCREEN_WIDTH = 1280, SCREEN_HEIGHT = 720;
 
 //Map constants
 const int M_WIDTH = 8, M_HEIGHT = 8;
-const int TILE_SIZE = 32, fTILE_SIZE = 30.f;
+const int TILE_SIZE = 32, fTILE_SIZE = 32.f;
 
 //Grid stuff
 const float LAMBDA = 300.f;
@@ -35,6 +35,13 @@ Color halfColor(Color c){
   c.r /= 2, c.b /=2, c.g /=2;
   return c;
 }
+
+Vector2f normalizeVec2f(Vector2f vec){
+  double mod = sqrt(pow(vec.x, 2) + pow(vec.y, 2));
+  vec.x /= mod, vec.y /= mod;
+  return vec;
+}
+
 class worldMap {
   private:
     int w_map[M_WIDTH][M_HEIGHT];
@@ -101,7 +108,13 @@ class Player : public Entity {
       //shape.setPosition((position.x * TILE_SIZE) + TLE_SIZE/4, (position.y * TILE_SIZE) + TILE_SIZE/4);
      
       //Draw view line
-      Vertex line[] = {Vertex(Vector2f(position.x * TILE_SIZE, position.y * TILE_SIZE)), Vertex(position + direction * LAMBDA)};
+      Color viewCol = Color::Magenta;
+      Vector2f dest = (position + direction * LAMBDA);
+       
+      Vertex line[] = {
+        Vertex(Vector2f(position.x * TILE_SIZE + TILE_SIZE/3, position.y * TILE_SIZE + TILE_SIZE/3), viewCol),
+        Vertex(dest, viewCol)
+        };
       window->draw(line, 2, Lines); 
      
       //Draw camera line
@@ -169,6 +182,15 @@ int main(){
                 if(Keyboard::isKeyPressed(Keyboard::Up)) move_direction = 1.f;
                 if(Keyboard::isKeyPressed(Keyboard::Down)) move_direction = -1.f;
                 
+                float rotDirection = 0.f;
+                if(Keyboard::isKeyPressed(Keyboard::Left)) rotDirection = 1.f;
+                if(Keyboard::isKeyPressed(Keyboard::Right)) rotDirection = -1.f;
+
+                if(rotDirection != 0.f){
+                  float rot = ROT_SPEED * rotDirection * dt;
+                  m_player.direction = rotateVec2f(m_player.direction, rot);
+                  m_player.camera_plane = rotateVec2f(m_player.camera_plane, rot);
+                }
                 
                 if(move_direction != 0){
                   Vector2f moveVec = m_player.direction * PLAYER_SPEED * move_direction * dt; 
@@ -180,16 +202,8 @@ int main(){
                   }
                 }
 
-                float rotDirection = 0.f;
-                if(Keyboard::isKeyPressed(Keyboard::Left)) rotDirection = 1.f;
-                if(Keyboard::isKeyPressed(Keyboard::Right)) rotDirection = -1.f;
-
-                if(rotDirection != 0.f){
-                  float rot = ROT_SPEED * rotDirection * dt;
-                  m_player.direction = rotateVec2f(m_player.direction, rot);
-                  m_player.camera_plane = rotateVec2f(m_player.camera_plane, rot);
-                }
-                //break;
+               
+                break;
             }        
         }
         //Actual Raycasting
